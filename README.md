@@ -25,3 +25,5 @@ KeybowMiniMacro.py is the modified macro code from https://github.com/codepope/K
 keybow_mini.py is from https://github.com/dglaude/circuitpython_phat_on_pico but with the GPIO changed for this adapter.
 
 testLights.py and testRainbow.py are just for testing the LEDs, since I had trouble with them until I figured out the controls were on GP10 & GP11 not on GP2 & GP3
+
+boot.py was added to disable the USB storage function.  if you hold down Key1 while plugging in, it will mount CIRCUTPY normally.  REPL is still available either way.
