@@ -11,6 +11,7 @@ from adafruit_hid.keycode import Keycode
 
 from adafruit_hid.consumer_control import ConsumerControl
 from adafruit_hid.consumer_control_code import ConsumerControlCode
+cc = ConsumerControl(usb_hid.devices)
 
 pixels=adafruit_dotstar.DotStar(board.GP10, board.GP11,3)
 kbd = Keyboard(usb_hid.devices)
@@ -66,12 +67,24 @@ def key_undo(kdb,layout):
     kbd.press(Keycode.COMMAND,Keycode.Z)
     kbd.release_all()
 
+# Raise volume.
+def key_vol_up(kdb,layout):
+    cc.send(ConsumerControlCode.VOLUME_INCREMENT)
+
+# Lower volume.
+def key_vol_down(kdb,layout):
+    cc.send(ConsumerControlCode.VOLUME_DECREMENT)
+    
+# Pause or resume playback.
+def key_play_pause(kdb,layout):
+    cc.send(ConsumerControlCode.PLAY_PAUSE)
+
 keyArray=[]
 #                 KeyLight(keynum,pinnum,lednum,press_string,press_func)
 #keyArray.append( KeyLight( 0, board.GP17,   0,  None, key_macroinckey))
 keyArray.append( KeyLight( 0, board.GP17,   2,  None, key_undo))
-keyArray.append( KeyLight( 1, board.GP22,   1,  "1",  None))
-keyArray.append( KeyLight( 2, board.GP6,  0, "2",  None))
+keyArray.append( KeyLight( 1, board.GP22,   1,  None, key_vol_up))
+keyArray.append( KeyLight( 2, board.GP6,  0, None,  key_vol_down))
 #keyArray.append( KeyLight( 0, board.GP7,   3,  None, key_macroinckey))
 #keyArray.append( KeyLight( 1, board.GP8,   7,  "1",  None))
 #keyArray.append( KeyLight( 2, board.GP27,  11, "2",  None))
@@ -102,3 +115,4 @@ while True:
         elif k.key_was_pressed():
                 k.key_released()
                 k.set_pixel(k.base_color)
+
