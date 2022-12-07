@@ -140,17 +140,3 @@ while True:
                 debounce = short_debounce
                 #print(key_press, "current_layer ", current_layer)
                 consumer_control.send(key_press)
-        elif switches[k].long_press and switches[k].short_count == 1:
-            print("That's a long double press !" , k)
-# while True:
-#     now = time.monotonic()
-#    
-#     for k in range(NUM_KEYS):
-#         switches[k].update()
-#         if switches[k].long_press:
-#             print("Long Press", k)
-#             pixels[_LEDS[k]] = (random_color(), random_color(), random_color())
-#         if switches[k].short_count != 0:
-#             print("Short Press Count =", switches[k].short_count, "k = ", k)
-#         if switches[k].long_press and switches[k].short_count == 1:
-#             print("That's a long double press !" , k)
