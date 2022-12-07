@@ -2,6 +2,7 @@ import board
 import digitalio
 import adafruit_dotstar
 import time
+from adafruit_debouncer import Button
 
 import usb_hid
 
@@ -11,6 +12,7 @@ from adafruit_hid.keycode import Keycode
 
 from adafruit_hid.consumer_control import ConsumerControl
 from adafruit_hid.consumer_control_code import ConsumerControlCode
+cc = ConsumerControl(usb_hid.devices)
 
 pixels=adafruit_dotstar.DotStar(board.GP10, board.GP11,3)
 kbd = Keyboard(usb_hid.devices)
@@ -30,6 +32,8 @@ class KeyLight:
 
     def activate_pin(self):
         self.pin=digitalio.DigitalInOut(self.pinnum)
+        self.pin.direction = digitalio.Direction.INPUT
+        self.pin.pull = digitalio.Pull.UP
         self.pin.switch_to_input(pull=digitalio.Pull.UP)
 
     def set_pixel(self,color):
@@ -62,16 +66,32 @@ def key_macroinckey(kdb,layout):
     layout.write(f"Macro {macro_n}")  
     macro_n += 1
 
-def key_undo(kdb,layout):
+def key_mac_undo(kdb,layout):
     kbd.press(Keycode.COMMAND,Keycode.Z)
     kbd.release_all()
 
+# Raise volume.
+def key_vol_up(kdb,layout):
+    cc.send(ConsumerControlCode.VOLUME_INCREMENT)
+
+# Lower volume.
+def key_vol_down(kdb,layout):
+    cc.send(ConsumerControlCode.VOLUME_DECREMENT)
+    
+# Pause or resume playback.
+def key_play_pause(kdb,layout):
+    cc.send(ConsumerControlCode.PLAY_PAUSE)
+    
+# Pause or resume playback.
+def key_mute(kdb,layout):
+    cc.send(ConsumerControlCode.MUTE)
+
 keyArray=[]
-#                KyeLight(keynum,pinnum,lednum,press_string,press_func)
+#                 KeyLight(keynum,pinnum,lednum,press_string,press_func)
 #keyArray.append( KeyLight( 0, board.GP17,   0,  None, key_macroinckey))
-keyArray.append( KeyLight( 0, board.GP17,   2,  None, key_undo))
-keyArray.append( KeyLight( 1, board.GP22,   1,  "1",  None))
-keyArray.append( KeyLight( 2, board.GP6,  0, "2",  None))
+keyArray.append( KeyLight( 0, board.GP17,   2,  None, key_mute))
+keyArray.append( KeyLight( 1, board.GP22,   1,  None, key_vol_up))
+keyArray.append( KeyLight( 2, board.GP6,    0,  None, key_vol_down))
 #keyArray.append( KeyLight( 0, board.GP7,   3,  None, key_macroinckey))
 #keyArray.append( KeyLight( 1, board.GP8,   7,  "1",  None))
 #keyArray.append( KeyLight( 2, board.GP27,  11, "2",  None))
@@ -85,7 +105,15 @@ keyArray.append( KeyLight( 2, board.GP6,  0, "2",  None))
 #keyArray.append( KeyLight( 10, board.GP17, 4,  "Ten", None))
 #keyArray.append( KeyLight( 11, board.GP14, 8,  "Eleven", None))
 
-
+#while True:
+#    switch.update()
+#    if switch.long_press:
+#        print("Long Press")
+#    if switch.short_count != 0:
+#        print("Short Press Count =", switch.short_count)
+#   if switch.long_press and switch.short_count == 1:
+#        print("That's a long double press !")
+        
 while True:
     keydown=False
     for k in keyArray:
