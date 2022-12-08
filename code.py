@@ -39,6 +39,8 @@ pixels=dotstar.DotStar(board.GP10, board.GP11, NUM_KEYS, brightness=0.2)
 #initialize Debounce Buttons
 switches = []
 
+_short_press = 200 #ms
+_long_press = 500 #ms
 #define the button array per PIN in the array above
 for i in range(len(_PINS)):
     _pin = digitalio.DigitalInOut(_PINS[i])
@@ -49,7 +51,7 @@ for i in range(len(_PINS)):
     #                          long_duration_ms: int = 500,
     #                          value_when_pressed: bool = False,
     #                            **kwargs)
-    _switches = Button(_pin)
+    _switches = Button(_pin, _short_press, _long_press)
     switches.append(_switches)
     
 # Our layers. The key of item in the layer dictionary is the key number on
@@ -60,7 +62,7 @@ for i in range(len(_PINS)):
 
 layer_1 =     {0: Keycode.ZERO,
                1: Keycode.ONE,
-               2: Keycode.FOUR
+               2: Keycode.TWO
                }
 
 layer_2 =     {0: "pack ",
@@ -103,40 +105,78 @@ debounce = 0.03
 fired = False
 
 while True:
-    # Always remember to call keybow.update()!
+    
     for k in range(NUM_KEYS):
+        # Always remember to call button.update()!
         switches[k].update()
-        if current_layer == -1 and switches[k].short_count != 0:
-            current_layer = k
-            for layer in layers.keys():
-                pixels[_LEDS[layer]] = colours[current_layer]
         
+        #Modifications mode - change layers or brightness
+        if current_layer == -1:
+            if switches[k].short_count == 1:
+                current_layer = k
+                for layer in layers.keys():
+                    pixels[_LEDS[layer]] = colours[current_layer]
+            if switches[k].short_count > 1:
+                newBrightness = switches[k].short_count/10
+                if k==1:
+                    pixels.brightness=pixels.brightness+newBrightness
+                elif k==2:
+                    pixels.brightness=pixels.brightness-newBrightness
+                    pixels.brightness=pixels.brightness+0.01
+        
+        #doubleclick - Long Press event
         elif switches[k].long_press and switches[k].short_count == 1:
-            print("That's a long double press !" , k)
-            pixels[_LEDS[k]] = (random_color(), random_color(), random_color())
-            
-        elif switches[k].long_press:
             if k is 0:
-                print("MODIFIER TRIGGER", k)
+                print("MODIFIER TRIGGER")
                 #pixels[_LEDS[k]] = (0,0,0)
                 # If the modifier key is held, light up the layer selector keys
                 for layer in layers.keys():
                     pixels[_LEDS[layer]] = colours[layer]
                     current_layer = -1
             else:
-                print("Long Press", k)
+                #doesn't currently have a use????
+                print("That's a long double press !" , k)
+                #pixels[_LEDS[k]] = (random_color(), random_color(), random_color())
+        
+        #Long Press event
+        elif switches[k].long_press:
+            #maybe new layer for longpress keys?
+            key_press = layers[current_layer][k]
+            #doesn't currently have a use????
+            print("Long Press", k)
+            while switches[k].released == False:
+                if current_layer == 0:
+                    debounce = short_debounce
+                    #print(key_press, "current_layer ", current_layer)
+                    keyboard.send(key_press)
+                elif current_layer == 1:
+                    debounce = long_debounce
+                    #print(key_press, "current_layer ", current_layer)
+                    layout.write(key_press)
+                elif current_layer == 2:
+                    debounce = short_debounce
+                    #print(key_press, "current_layer ", current_layer)
+                    consumer_control.send(key_press)
+                switches[k].update()
+                time.sleep(debounce)
+        
+        #Short Press event
         elif switches[k].short_count != 0:
             print("Short Press Count =", switches[k].short_count, "k = ", k)
-            key_press = layers[current_layer][k]
-            if current_layer == 0:
-                debounce = short_debounce
-                #print(key_press, "current_layer ", current_layer)
-                keyboard.send(key_press)
-            elif current_layer == 1:
-                debounce = long_debounce
-                #print(key_press, "current_layer ", current_layer)
-                layout.write(key_press)
-            elif current_layer == 2:
-                debounce = short_debounce
-                #print(key_press, "current_layer ", current_layer)
-                consumer_control.send(key_press)
+            for n in range(switches[k].short_count):
+                #capture expected output based on current layer and k(key number)
+                key_press = layers[current_layer][k]
+                if current_layer == 0:
+                    debounce = short_debounce
+                    #print(key_press, "current_layer ", current_layer)
+                    keyboard.send(key_press)
+                elif current_layer == 1:
+                    debounce = long_debounce
+                    #print(key_press, "current_layer ", current_layer)
+                    layout.write(key_press)
+                elif current_layer == 2:
+                    debounce = short_debounce
+                    #print(key_press, "current_layer ", current_layer)
+                    consumer_control.send(key_press)
+                switches[k].update()
+                time.sleep(debounce)
